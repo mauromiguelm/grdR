@@ -146,18 +146,9 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
 
 }
 
-tdsR_fit <- function(inputData, groupingVariables){
 
-  #FIXME option for user to calculate trapezoid estimates
+tdsR_get_params <- function(inputData){
 
-  #FIXME option for user to use growth rates (trapezoid) instead of growth curves
-
-  inputData <- tdsR_convert(inputData = inputData, case = "C", initial_count = T)
-
-  inputData$fc_ttm = with(inputData, cell_count/cell_count__ctrl)
-  inputData$fc_ctr = with(inputData, cell_count__ctrl/cell_count__time0)
-
-  # the idea is to fit, get k (slope) bsaed on random sampling, and limit the area of search based on that
 
   max_k <- NA
 
@@ -186,8 +177,8 @@ tdsR_fit <- function(inputData, groupingVariables){
   time$prior <- setNames(time$prior, time$points)
 
   time$posterior <- setNames(rep(0,
-                                        times = length(time$points)),
-                                    time$points) # limit to search
+                                 times = length(time$points)),
+                             time$points) # limit to search
 
   # now call drc and fill parameters start timepoint and end time point,
   #TODO params[rownames(params) == c(time$min, time$max),]
@@ -201,14 +192,14 @@ tdsR_fit <- function(inputData, groupingVariables){
   params[rownames(params) == time$min,] <-  tdsR_logistic_fit(tmp.time)
 
   if( all(is.na(params[rownames(params) == time[["max"]] |
-               rownames(params) == time[["min"]],]) )){
+                       rownames(params) == time[["min"]],]) )){
 
     #min and max are na, return resistant
 
     time$return <- time$max
 
   }else if(all(!is.na(params[rownames(params) == time[["max"]] |
-                            rownames(params) == time[["min"]],]) )){
+                             rownames(params) == time[["min"]],]) )){
 
     # min and max are positive, return sensitive
 
@@ -261,11 +252,51 @@ tdsR_fit <- function(inputData, groupingVariables){
 
   }
 
-
-
   return(list(params, estimated_onset = time$return))
 
 
+}
+
+
+tdsR_fit <- function(inputData, groupingVariables){
+
+  #FIXME option for user to calculate trapezoid estimates
+
+  #FIXME option for user to use growth rates (trapezoid) instead of growth curves
+
+  inputData <- tdsR_convert(inputData = inputData, case = "C", initial_count = T)
+
+  inputData$fc_ttm = with(inputData, cell_count/cell_count__ctrl)
+  inputData$fc_ctr = with(inputData, cell_count__ctrl/cell_count__time0)
+
+  inputData$cell_line <- as.character(inputData$cell_line)
+
+  # the idea is to fit, get k (slope) bsaed on random sampling, and limit the area of search based on that
+
+  groupingVariables[!groupingVariables == "time"]
+
+  inputData$keys <- (base::do.call(paste, inputData[, groupingVariables[!groupingVariables == "time"]]))
+
+  keys <- unique(inputData$keys)
+
+  lapply(keys, function(key){
+
+    #key = keys[1]
+
+    subset_data <- subset(inputData, keys == key)
+
+
+    return(tdsR_get_params(subset_data))
+
+  }) -> output
+
+
+  tmp <- lapply(output, "[[",1)
+
+
+  names(tmp) <- keys
+
+  View(tmp[["HT29 Methotrexate"]])
   # create a conditional if endpoint doesnt produce a fit, cell is resistant (t_), if startpoint
 
   #then call drc again with a new time
