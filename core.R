@@ -136,7 +136,8 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
     output_df <- coef(output_drc)
 
     output_df["p_val"] <- f_pval
-  }else{
+
+     }else{
 
     output_df <- NA
 
@@ -194,14 +195,14 @@ tdsR_get_params <- function(inputData){
   if( all(is.na(params[rownames(params) == time[["max"]] |
                        rownames(params) == time[["min"]],]) )){
 
-    #min and max are na, return resistant
+    #min and max are not significant, return resistant
 
     time$return <- time$max
 
   }else if(all(!is.na(params[rownames(params) == time[["max"]] |
                              rownames(params) == time[["min"]],]) )){
 
-    # min and max are positive, return sensitive
+    # min and max are significant, return sensitive
 
     time$return <- time$min
 
@@ -269,13 +270,23 @@ tdsR_fit <- function(inputData, groupingVariables){
   inputData$fc_ttm = with(inputData, cell_count/cell_count__ctrl)
   inputData$fc_ctr = with(inputData, cell_count__ctrl/cell_count__time0)
 
-  inputData$cell_line <- as.character(inputData$cell_line)
+  if("cell_line" %in% colnames(inputData)){
+
+    inputData$cell_line <- as.character(inputData$cell_line)
+
+  }
 
   # the idea is to fit, get k (slope) bsaed on random sampling, and limit the area of search based on that
 
-  groupingVariables[!groupingVariables == "time"]
+  if(length(groupingVariables[!groupingVariables == "time"]) > 1){
 
-  inputData$keys <- (base::do.call(paste, inputData[, groupingVariables[!groupingVariables == "time"]]))
+    inputData$keys <- (base::do.call(paste, inputData[, groupingVariables[!groupingVariables == "time"]]))
+
+  }else{
+
+    inputData$keys <- inputData[, groupingVariables[!groupingVariables == "time"]]
+
+  }
 
   keys <- unique(inputData$keys)
 
@@ -285,18 +296,29 @@ tdsR_fit <- function(inputData, groupingVariables){
 
     subset_data <- subset(inputData, keys == key)
 
+    #inputData <- subset_data
 
-    return(tdsR_get_params(subset_data))
+    tmp <- tdsR_get_params(subset_data)
+
+
+    return(tmp)
 
   }) -> output
 
+  params <- output[[1]][[1]]
 
-  tmp <- lapply(output, "[[",1)
+
+  estimated_onset <- output[[1]][[2]]
 
 
-  names(tmp) <- keys
 
-  View(tmp[["HT29 Methotrexate"]])
+  return(list(params, estimated_onset))
+
+
+  #tmp <- lapply(output, "[[",1)
+  #names(tmp) <- keys
+
+  #View(tmp[["HT29 Methotrexate"]])
   # create a conditional if endpoint doesnt produce a fit, cell is resistant (t_), if startpoint
 
   #then call drc again with a new time
