@@ -103,13 +103,14 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
     formula = fc_ttm ~ concentration,
     na.action = na.omit,
     data = inputData,
-    fct = drc::l3u(names = c("h","l_asymp", "half_max"))
-    ), silent = T)
+    fct = drc::l3u(names = c("h","l_asymp", "half_max")),
+    upperl = c(NA, 1, NA)),
+    silent = T)
 
-    output_lm <-  try(lm(
-      formula = fc_ttm ~ concentration,
-      data = inputData
-    ), silent = T)
+    # output_lm <-  try(lm(
+    #   formula = fc_ttm ~ offset(concentration),
+    #   data = inputData
+    # ), silent = T)
 
   # test if logictic fit outperforms linear regression using ANOVA
 
@@ -117,25 +118,30 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
      !is.null(stats::coef(output_drc)) &&
      !is.null(stats::residuals(output_drc))
   ) {
-    RSS1 <-  sum((stats::resid(output_lm))**2)
 
-    RSS2 <-  sum((stats::resid(output_drc))**2)
+    # RSS1 <-  sum((stats::resid(output_lm))**2)
+    #
+    # RSS2 <-  sum((stats::resid(output_drc))**2)
+    #
+    # nparam1 <- 2  #FIXME check if dfs and models are correct
+    #
+    # nparam2 <- 3
+    #
+    # RDF1 <- dim(output_drc$data)[1] - nparam1
+    #
+    # RDF2 <- dim(output_drc$data)[1] - nparam2
+    #
+    # f_value = (RSS1 - RSS2)/(RDF1-RDF2) / (RSS2)/(RDF2)
+    #
+    # f_pval <- stats::pf(f_value, RDF1, RDF2, lower.tail = F)
+    #
+     output_df <- coef(output_drc)
+    #
+    #output_df["p_val"] <- f_pval
 
-    nparam1 <- 2  #FIXME check if dfs and models are correct
 
-    nparam2 <- 3
+     output_df["p_val"] <- summary(output_drc)[3]$coefficients[1,4]
 
-    RDF1 <- dim(output_drc$data)[1] - nparam1
-
-    RDF2 <- dim(output_drc$data)[1] - nparam2
-
-    f_value = (RSS1 - RSS2)/(RDF1-RDF2) / (RSS2)/(RDF2)
-
-    f_pval <- stats::pf(f_value, RDF1, RDF2, lower.tail = F)
-
-    output_df <- coef(output_drc)
-
-    output_df["p_val"] <- f_pval
 
      }else{
 
@@ -210,7 +216,9 @@ tdsR_get_params <- function(inputData){
 
     lapply(time$points, function(time_point){
 
-      output <- tdsR_logistic_fit(inputData[inputData$time == time_point,])
+      #time_point <- time$points[250]
+
+      output <- tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,])
 
     }) -> params
 
@@ -298,17 +306,20 @@ tdsR_fit <- function(inputData, groupingVariables){
 
     #inputData <- subset_data
 
-    tmp <- tdsR_get_params(subset_data)
+    tmp <- tdsR_get_params(inputData =  subset_data)
 
 
     return(tmp)
 
   }) -> output
 
-  params <- output[[1]][[1]]
+  params <- lapply(output, "[[",1)
 
+  names(params) <- keys
 
-  estimated_onset <- output[[1]][[2]]
+  estimated_onset <- lapply(output, "[[",2)
+
+  names(estimated_onset) <- keys
 
 
 
