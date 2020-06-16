@@ -103,8 +103,7 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
     formula = fc_ttm ~ concentration,
     na.action = na.omit,
     data = inputData,
-    fct = drc::l3u(names = c("h","l_asymp", "half_max")),
-    upperl = c(NA, 1, NA)),
+    fct = drc::l3u(names = c("h","l_asymp", "half_max"))),
     silent = T)
 
     # output_lm <-  try(lm(
@@ -156,7 +155,6 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
 
 tdsR_get_params <- function(inputData){
 
-
   max_k <- NA
 
   time <- list()
@@ -190,6 +188,8 @@ tdsR_get_params <- function(inputData){
   # now call drc and fill parameters start timepoint and end time point,
   #TODO params[rownames(params) == c(time$min, time$max),]
 
+
+
   tmp.time <- inputData[inputData$time == time$max,]
 
   params[rownames(params) == time$max,] <-  tdsR_logistic_fit(tmp.time)
@@ -198,41 +198,35 @@ tdsR_get_params <- function(inputData){
 
   params[rownames(params) == time$min,] <-  tdsR_logistic_fit(tmp.time)
 
-  if( all(is.na(params[rownames(params) == time[["max"]] |
-                       rownames(params) == time[["min"]],]) )){
-
-    #min and max are not significant, return resistant
-
-    time$return <- time$max
-
-  }else if(all(!is.na(params[rownames(params) == time[["max"]] |
-                             rownames(params) == time[["min"]],]) )){
-
-    # min and max are significant, return sensitive
-
-    time$return <- time$min
-
-  }else{ #scan across all t to define t_onset
-
-    lapply(time$points, function(time_point){
+  lapply(time$points, function(time_point){
 
       #time_point <- time$points[250]
 
-      output <- tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,])
+    output <- tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,])
 
-    }) -> params
+  }) -> params
 
-    params <- do.call(rbind, params)
+  params <- do.call(rbind, params)
 
-    rownames(params) <- time$points
+  rownames(params) <- time$points
 
-    time$return <- apply(params, 1, function(i) all(is.na(i)))
+  if(any(is.na(params[,"l_asymp:(Intercept)"]))){
 
-    time$return <- time$return[time$return == T]
+  time$return <- apply(params, 1, function(i) all(is.na(i)))
 
-    time$return <- time$return[names(time$return) == max(names(time$return))]
+  time$return <- time$return[time$return == T]
 
-    time$return <- names(time$return)
+  time$return <- time$return[names(time$return) == max(names(time$return))]
+
+  time$return <- names(time$return)
+
+  }else{
+
+    time$return <- which(abs(params[,"l_asymp:(Intercept)"]-1)==min(abs(params[,"l_asymp:(Intercept)"]-1)))
+
+  }
+
+
 
     # if(all(time$posterior == 0)){  #posterior is empty, run from prior
     #
@@ -258,8 +252,6 @@ tdsR_get_params <- function(inputData){
     # }else{ #run and update posterior
     #
     # }
-
-  }
 
   return(list(params, estimated_onset = time$return))
 
@@ -308,8 +300,11 @@ tdsR_fit <- function(inputData, groupingVariables){
 
     tmp <- tdsR_get_params(inputData =  subset_data)
 
+    tmp[[1]] <- cbind(key, tmp[[1]])
 
     return(tmp)
+
+    names(tmp[[2]]) <- key
 
   }) -> output
 
@@ -321,10 +316,7 @@ tdsR_fit <- function(inputData, groupingVariables){
 
   names(estimated_onset) <- keys
 
-
-
   return(list(params, estimated_onset))
-
 
   #tmp <- lapply(output, "[[",1)
   #names(tmp) <- keys
@@ -343,8 +335,25 @@ tdsR_fit <- function(inputData, groupingVariables){
   #FIXME how to correct for growth rate? cells that divide less tend to have later effects.
   #FIXME maybe adjust t_onset by k, normalize by k
 
+}
 
 
+tdsR_getOutput <- function(inputData, metric){
+
+  if(metric == "tdsR"){
+
+    out <- do.call(rbind, inputData[[2]])
+
+  }else if(metric == "parameters"){
+
+    out <- do.call(rbind, inputData[[1]])
+
+  }else{
+    stop("metric not found")
+  }
+
+  return(out)
 
 }
+
 
