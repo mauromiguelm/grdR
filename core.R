@@ -200,7 +200,7 @@ tdsR_get_params <- function(inputData){
 
   lapply(time$points, function(time_point){
 
-      #time_point <- time$points[250]
+    #time_point <- time$points[250]
 
     output <- tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,])
 
@@ -216,7 +216,7 @@ tdsR_get_params <- function(inputData){
 
   time$return <- time$return[time$return == T]
 
-  time$return <- time$return[names(time$return) == max(names(time$return))]
+  time$return <- time$return[names(time$return) == max(as.numeric(names(time$return)))]
 
   time$return <- names(time$return)
 
