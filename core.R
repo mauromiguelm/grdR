@@ -93,7 +93,7 @@ tdsR_convert = function(inputData, case, initial_count) {
 
 }
 
-tdsR_logistic_fit <- function(inputData, groupingVariables){
+tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit){
 
   #inputData <- tmp.time
 
@@ -103,7 +103,8 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
     formula = fc_ttm ~ concentration,
     na.action = na.omit,
     data = inputData,
-    fct = drc::l3u(names = c("h","l_asymp", "half_max"))),
+    fct = drc::l3u(names = c("h","l_asymp", "half_max")),
+    upperl = c(NA, upperLimit, NA)),
     silent = T)
 
     # output_lm <-  try(lm(
@@ -153,7 +154,7 @@ tdsR_logistic_fit <- function(inputData, groupingVariables){
 }
 
 
-tdsR_get_params <- function(inputData){
+tdsR_get_params <- function(inputData, timeTreatment, upperLimit, upperLimitThreshold){
 
   max_k <- NA
 
@@ -167,7 +168,7 @@ tdsR_get_params <- function(inputData){
 
   params <- matrix(data = NA, ncol = 4, nrow = length(time$points))
 
-  params <- as.data.frame(params)
+  #params <- as.data.frame(params)
 
   colnames(params) <- c("h", "l_asymp", "half_max", "p_val")
 
@@ -192,39 +193,57 @@ tdsR_get_params <- function(inputData){
 
   tmp.time <- inputData[inputData$time == time$max,]
 
-  params[rownames(params) == time$max,] <-  tdsR_logistic_fit(tmp.time)
+  params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData =  tmp.time, upperLimit = upperLimitThreshold), silent = T)
 
-  tmp.time <- inputData[inputData$time == time$min,]
 
-  params[rownames(params) == time$min,] <-  tdsR_logistic_fit(tmp.time)
+  if(params[rownames(params) == time$max,2] >= upperLimitThreshold | is.na(params[rownames(params) == time$max,2])){
 
-  lapply(time$points, function(time_point){
-
-    #time_point <- time$points[250]
-
-    output <- tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,])
-
-  }) -> params
-
-  params <- do.call(rbind, params)
-
-  rownames(params) <- time$points
-
-  if(any(is.na(params[,"l_asymp:(Intercept)"]))){
-
-  time$return <- apply(params, 1, function(i) all(is.na(i)))
-
-  time$return <- time$return[time$return == T]
-
-  time$return <- time$return[names(time$return) == max(as.numeric(names(time$return)))]
-
-  time$return <- names(time$return)
+    params[rownames(params) == time$max,2] <- upperLimit
 
   }else{
 
-    time$return <- which(abs(params[,"l_asymp:(Intercept)"]-1)==min(abs(params[,"l_asymp:(Intercept)"]-1)))
+    lapply(time$points, function(time_point){
+
+      #time_point <- time$max
+
+      output <- try(tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,],
+                                      upperLimit = upperLimit), silent = T)
+
+
+
+    }) -> params
+
+    params <- do.call(rbind, params)
+
+    rownames(params) <- time$points
 
   }
+
+  time$return <- params[,2] == upperLimit
+
+  time$return <- time$points[time$return]
+
+  time$return <- max(as.numeric(time$return), na.rm = T)
+
+  if(time$return < timeTreatment){time$return = timeTreatment}
+
+  #if(any(is.na(params[,"l_asymp:(Intercept)"]))){
+
+  #time$return <- apply(params, 1, function(i) all(is.na(i)))
+
+  # time$return <- time$return[time$return == T]
+  #
+  # time$return <- time$return[names(time$return) == max(as.numeric(names(time$return)))]
+  #
+  # time$return <- names(time$return)
+  #
+  # }else{
+  #
+  #   #diff(params[,"l_asymp:(Intercept)"])  #which(abs(params[,"l_asymp:(Intercept)"]-1)==min(abs(params[,"l_asymp:(Intercept)"]-1)))
+  #
+  #   time$return <- as.numeric(names(which(diff(params[,"l_asymp:(Intercept)"]) == min(diff(params[,"l_asymp:(Intercept)"])))))
+  #
+  # }
 
 
 
@@ -259,11 +278,47 @@ tdsR_get_params <- function(inputData){
 }
 
 
-tdsR_fit <- function(inputData, groupingVariables){
+tdsR_smooth <- function(inputData, groupingVariables){
+
+
+  groupingVariables <- append(groupingVariables, "concentration")
+
+  groups <- do.call(paste, inputData[,groupingVariables])
+
+  lapply(split(inputData, groups), function(x){
+
+    #print(x$cell_line[1])
+    #print(x$agent[1])
+    #x = split(inputData, groups)[[1]]
+
+    out <- x[!duplicated(x$time),]
+
+    rownames(out) <- out$time
+
+    model <- mgcv::gam(cell_count ~ s(time, bs = "cs"), data = x)
+
+    timeInput <- data.frame(time = unique(x$time))
+
+    out[order(match(rownames(out), timeInput$time)),"cell_count"] <- predict(model, timeInput)
+
+    return(out)
+
+    }) -> out
+
+  out <- do.call(rbind, out)
+
+  return(out)
+
+}
+
+
+tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9, upperLimitThreshold = 0.8, smoothData = T){
 
   #FIXME option for user to calculate trapezoid estimates
 
   #FIXME option for user to use growth rates (trapezoid) instead of growth curves
+
+  if(smoothData == T){inputData = tdsR_smooth(inputData, groupingVariables)}
 
   inputData <- tdsR_convert(inputData = inputData, case = "C", initial_count = T)
 
@@ -290,29 +345,31 @@ tdsR_fit <- function(inputData, groupingVariables){
 
   keys <- unique(inputData$keys)
 
-  lapply(keys, function(key){
+  output <- lapply(keys, function(key){
 
-    #key = keys[1]
+    #key = keys[11]
+
+    #key = "HOP62 Gemcitabine"
 
     subset_data <- subset(inputData, keys == key)
 
     #inputData <- subset_data
 
-    tmp <- tdsR_get_params(inputData =  subset_data)
+    tmp <- tdsR_get_params(inputData =  subset_data, timeTreatment, upperLimit, upperLimitThreshold)
 
     tmp[[1]] <- cbind(key, tmp[[1]])
 
-    return(tmp)
-
     names(tmp[[2]]) <- key
 
-  }) -> output
+    return(tmp)
+
+  })
 
   params <- lapply(output, "[[",1)
 
   names(params) <- keys
 
-  estimated_onset <- lapply(output, "[[",2)
+  estimated_onset <- unlist(lapply(output, "[[",2))
 
   names(estimated_onset) <- keys
 
@@ -342,11 +399,19 @@ tdsR_getOutput <- function(inputData, metric){
 
   if(metric == "tdsR"){
 
-    out <- do.call(rbind, inputData[[2]])
+    #inputData = tmp
+
+    out <- inputData[[2]]
+
+    groups <- names(out)
+
+    out <- data.frame(groups = names(out), tds = out)
 
   }else if(metric == "parameters"){
 
-    out <- do.call(rbind, inputData[[1]])
+    out <- inputData[[1]]
+
+    out <- do.call(rbind, out)
 
   }else{
     stop("metric not found")
