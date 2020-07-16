@@ -154,7 +154,11 @@ tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit){
 }
 
 
-tdsR_get_params <- function(inputData, timeTreatment, upperLimit, upperLimitThreshold){
+tdsR_get_params <- function(inputData,
+                            timeTreatment,
+                            upperLimit,
+                            upperLimitThreshold,
+                            orderConcentration){
 
   max_k <- NA
 
@@ -189,14 +193,19 @@ tdsR_get_params <- function(inputData, timeTreatment, upperLimit, upperLimitThre
   # now call drc and fill parameters start timepoint and end time point,
   #TODO params[rownames(params) == c(time$min, time$max),]
 
-
-
   tmp.time <- inputData[inputData$time == time$max,]
+
+  # conc <- tmp.time$concentration
+  #
+  # fc_ttm <- tmp.time$fc_ttm
+  #
+  # if(orderConc == T){conc = conc[order(tmp.time$fc_ttm, decreasing = T)]}
 
   params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData =  tmp.time, upperLimit = upperLimitThreshold), silent = T)
 
 
-  if(params[rownames(params) == time$max,2] >= upperLimitThreshold | is.na(params[rownames(params) == time$max,2])){
+  if(params[rownames(params) == time$max,2] >= upperLimitThreshold | is.na(params[rownames(params) == time$max,2]) |
+     params[rownames(params) == time$max,2] >= upperLimit){
 
     params[rownames(params) == time$max,2] <- upperLimit
 
@@ -209,8 +218,6 @@ tdsR_get_params <- function(inputData, timeTreatment, upperLimit, upperLimitThre
       output <- try(tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,],
                                       upperLimit = upperLimit), silent = T)
 
-
-
     }) -> params
 
     params <- do.call(rbind, params)
@@ -219,11 +226,29 @@ tdsR_get_params <- function(inputData, timeTreatment, upperLimit, upperLimitThre
 
   }
 
-  time$return <- params[,2] == upperLimit
+  ##### checking when model crashes ####
 
-  time$return <- time$points[time$return]
+  return.l_assymp <- params[,2] == upperLimit
 
-  time$return <- max(as.numeric(time$return), na.rm = T)
+  return.l_assymp <- time$points[return.l_assymp]
+
+  return.l_assymp <- max(as.numeric(return.l_assymp), na.rm = T)
+
+  return.na <- is.na(params[,2])
+
+  return.na <- time$points[return.na]
+
+  return.na <- max(as.numeric(return.na), na.rm = T)
+
+  return.sign <- c(0, diff(sign(params[,2])))
+
+  return.sign <- which(return.sign > 0)
+
+  return.sign <- time$points[return.sign]
+
+  return.sign <- return.na <- max(as.numeric(return.sign), na.rm = T)
+
+  time$return <- max(c(return.l_assymp, return.na, return.sign))
 
   if(time$return < timeTreatment){time$return = timeTreatment}
 
@@ -312,7 +337,8 @@ tdsR_smooth <- function(inputData, groupingVariables){
 }
 
 
-tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9, upperLimitThreshold = 0.8, smoothData = T){
+tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9, upperLimitThreshold = 0.8, smoothData = T,
+                     orderConc = T){
 
   #FIXME option for user to calculate trapezoid estimates
 
@@ -347,15 +373,17 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
   output <- lapply(keys, function(key){
 
-    #key = keys[11]
+    print(key)
 
-    #key = "HOP62 Gemcitabine"
+    #key = keys[20]
+
+    #key = "EKVX Etomoxir"
 
     subset_data <- subset(inputData, keys == key)
 
     #inputData <- subset_data
 
-    tmp <- tdsR_get_params(inputData =  subset_data, timeTreatment, upperLimit, upperLimitThreshold)
+    tmp <- tdsR_get_params(inputData =  subset_data, timeTreatment, upperLimit, upperLimitThreshold, orderConc)
 
     tmp[[1]] <- cbind(key, tmp[[1]])
 
