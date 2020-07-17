@@ -158,7 +158,7 @@ tdsR_get_params <- function(inputData,
                             timeTreatment,
                             upperLimit,
                             upperLimitThreshold,
-                            orderConcentration){
+                            orderConc){
 
   max_k <- NA
 
@@ -195,11 +195,13 @@ tdsR_get_params <- function(inputData,
 
   tmp.time <- inputData[inputData$time == time$max,]
 
-  # conc <- tmp.time$concentration
-  #
-  # fc_ttm <- tmp.time$fc_ttm
-  #
-  # if(orderConc == T){conc = conc[order(tmp.time$fc_ttm, decreasing = T)]}
+  conc <- tmp.time$concentration
+
+  fc_ttm <- tmp.time$fc_ttm
+
+  if(orderConc == T){conc = conc[order(fc_ttm, decreasing = T)]}
+
+  tmp.time$concentration <- conc
 
   params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData =  tmp.time, upperLimit = upperLimitThreshold), silent = T)
 
@@ -215,8 +217,21 @@ tdsR_get_params <- function(inputData,
 
       #time_point <- time$max
 
-      output <- try(tdsR_logistic_fit(inputData =  inputData[inputData$time == time_point,],
-                                      upperLimit = upperLimit), silent = T)
+      inputData =  inputData[inputData$time == time_point,]
+
+      conc <- inputData$concentration
+
+      fc_ttm <- inputData$fc_ttm
+
+      if(orderConc == T){conc = conc[order(fc_ttm, decreasing = T)]}
+
+      inputData$concentration <- conc
+
+
+
+      output <- try(tdsR_logistic_fit(inputData =  inputData,
+                                      upperLimit = upperLimit),
+                    silent = T)
 
     }) -> params
 
