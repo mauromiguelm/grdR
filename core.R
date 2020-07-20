@@ -104,7 +104,8 @@ tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit){
     na.action = na.omit,
     data = inputData,
     fct = drc::l3u(names = c("h","l_asymp", "half_max")),
-    upperl = c(NA, upperLimit, NA)),
+    upperl = c(NA, upperLimit, NA),
+    lowerl = c(NA, 1E-10, NA)),
     silent = T)
 
     # output_lm <-  try(lm(
@@ -261,7 +262,7 @@ tdsR_get_params <- function(inputData,
 
   return.sign <- time$points[return.sign]
 
-  return.sign <- return.na <- max(as.numeric(return.sign), na.rm = T)
+  return.sign <- max(as.numeric(return.sign), na.rm = T)
 
   time$return <- max(c(return.l_assymp, return.na, return.sign))
 
@@ -390,7 +391,7 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
     print(key)
 
-    #key = keys[20]
+    #key = keys[11]
 
     #key = "EKVX Etomoxir"
 
