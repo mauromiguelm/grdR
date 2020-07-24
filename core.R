@@ -26,7 +26,7 @@ tdsR_convert = function(inputData, case, initial_count) {
     ctrl = inputData[inputData$concentration == 0 & inputData$time > 0,
                      c(keys, 'cell_count')]
     data = inputData[inputData$concentration != 0 & inputData$time > 0, ]
-    time0_keys = NULL   #TODO CONTINUE HERE
+    time0_keys = NULL
     ctrl_keys = NULL
     for(i in 1:length(keys)) {
       #i = 1
@@ -79,28 +79,9 @@ tdsR_convert = function(inputData, case, initial_count) {
 
 tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLimit){
 
-  #inputData <- tmp.time
-
-  #FIXME require(drc)
-
-  # output_drc <- try(drc::drm(
-  #   formula = fc_ttm ~ concentration,
-  #   na.action = na.omit,
-  #   data = inputData,
-  #   fct = drc::l3u(names = c("h","l_asymp", "half_max")),
-  #   upperl = c(NA, upperLimit, NA),
-  #   lowerl = c(NA, 1E-10, NA)),
-  #   silent = T)
-
   if(!is.null(upperLimit)){upperLimit <- c(NA,NA, upperLimit, NA)}
 
   if(!is.null(lowerLimit)){lowerLimit <- c(NA,NA, lowerLimit, NA)}
-
-  #upperLimit = NULL
-
-  #upperLimit <- c(NA,1E-10, NA, NA)
-
-  #lowerLimit <- c(NA,0, 1E-10, NA)
 
   output_drc <- drc::drm(
     formula = fc_ttm ~ concentration,
@@ -109,10 +90,6 @@ tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLim
     upperl = upperLimit,
     lowerl = lowerLimit,
     fct = drc::L.4())
-
-  #plot(output_drc, )
-
-  # test if logictic fit outperforms linear regression using ANOVA
 
   if(class(output_drc) == "drc" &&
      !is.null(stats::coef(output_drc)) &&
@@ -279,9 +256,7 @@ tdsR_smooth <- function(inputData, groupingVariables, metric){
 tdsR_fit <- function(inputData, groupingVariables, case = "C", timeTreatment, upperLimit = NULL,
                      smoothData = T, lowerLimit = NULL, orderConc = T, limitThreshold = NULL){
 
-  #FIXME option for user to calculate trapezoid estimates
-
-  #FIXME option for user to use growth rates (trapezoid) instead of growth curves
+  #TODO option for user to calculate trapezoid estimates
 
   if(case == "B"){
     if(!"value" %in% colnames(inputData)){stop("incorrect input B")}
