@@ -1,3 +1,8 @@
+#' From input data x, calculate trimmed means from replicates
+#'
+#' @param x inputData
+#' @param k percent of observations to remove
+#' @return The sum of \code{x} and \code{y}
 tdsR_trim_mean = function(x, percent) {
   x = x[!is.na(x)]
   n = length(x)
@@ -14,6 +19,11 @@ tdsR_trim_mean = function(x, percent) {
   return(mean(x))
 }
 
+#' convert inputData A,B or C into grouped data for logictic fit
+#'
+#' @param inputData input data in format cases A,B or C
+#' @param case specify the type of input data, case A, B or C
+#' @return Organized data with controls and treatmets on the same row
 tdsR_convert = function(inputData, case, initial_count) {
 
   if(case == "A" | case == "B") {
@@ -77,6 +87,13 @@ tdsR_convert = function(inputData, case, initial_count) {
 
 }
 
+#' Fit a logictic function in the inputData
+#'
+#' @param inputData A data.frame
+#' @param groupingVariables Specify by which variables the data should be grouped
+#' @param upperLimit Boundary for upper limit assymptote
+#' @param lowerLimit Boundary for lower limit assymptote
+#' @return Parameters for the logictic fit
 tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLimit){
 
   if(!is.null(upperLimit)){upperLimit <- c(NA,NA, upperLimit, NA)}
@@ -111,7 +128,16 @@ tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLim
 
 }
 
-
+#' Handle the output of logictic fit and return tds together with logictic parameters
+#'
+#' @param inputData A data.frame
+#' @param timeTreatment At what time the intervention was introduced
+#' @param upperLimit Boundary for upper limit assymptote
+#' @param lowerLimit Boundary for lower limit assymptote
+#' @param limitThreshold Minimal cut off to run tdsR, if bellow threshold function return largest tds
+#' @param orderConc Order concentration according to effect size
+#' @param case which input data is provided: case A,B or C
+#' @return tds and logictic parameters
 tdsR_get_params <- function(inputData,
                             timeTreatment,
                             upperLimit,
@@ -188,7 +214,7 @@ tdsR_get_params <- function(inputData,
 
   rownames(params) <- time$points
 
-  ##### checking when model crashes ####
+  #### checking when model crashes ####
 
   return.l_assymp <- params[,3] <= lowerLimit
 
@@ -218,7 +244,11 @@ tdsR_get_params <- function(inputData,
 
 }
 
-
+#' Remove noise from inputData
+#'
+#' @param inputData A data.frame
+#' @param groupingVariables Specify by which variables the data should be grouped
+#' @return output of smooth function for every group in groupingVariables
 tdsR_smooth <- function(inputData, groupingVariables, metric){
 
 
@@ -252,7 +282,18 @@ tdsR_smooth <- function(inputData, groupingVariables, metric){
 
 }
 
-
+#' Main function that handles input data and return tds
+#'
+#' @param inputData input data in format cases A,B or C
+#' @param groupingVariables Specify by which variables the data should be grouped
+#' @param case which input data is provided: case A,B or C
+#' @param timeTreatment At what time the intervention was introduced
+#' @param upperLimit Boundary for upper limit assymptote
+#' @param smoothData If noise removal from replicates should be performed: recommended for better fit
+#' @param lowerLimit Boundary for lower limit assymptote
+#' @param orderConc Order concentration according to effect size
+#' @param limitThreshold Minimal cut off to run tdsR, if bellow threshold function return largest tds
+#' @return tdsR and logictic fit parameters
 tdsR_fit <- function(inputData, groupingVariables, case = "C", timeTreatment, upperLimit = NULL,
                      smoothData = T, lowerLimit = NULL, orderConc = T, limitThreshold = NULL){
 
