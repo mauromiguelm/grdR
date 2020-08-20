@@ -101,7 +101,7 @@ tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLim
   if(!is.null(lowerLimit)){lowerLimit <- c(NA,NA, lowerLimit, NA)}
 
   output_drc <- drc::drm(
-    formula = fc_ttm ~ concentration,
+    formula = as.numeric(fc_ttm) ~ as.numeric(concentration),
     na.action = na.omit,
     data = inputData,
     upperl = upperLimit,
