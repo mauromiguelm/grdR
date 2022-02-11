@@ -93,20 +93,32 @@ tdsR_convert = function(inputData, case, initial_count) {
 
 }
 
-tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit){
+tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLimit = 1E-10){
 
   #inputData <- tmp.time
 
-  #FIXME require(drc)
 
-  output_drc <- try(drc::drm(
-    formula = fc_ttm ~ concentration,
+  if(!is.null(upperLimit)){upperLimit <- c(NA,NA, upperLimit, NA)}
+
+  if(!is.null(lowerLimit)){lowerLimit <- c(NA,NA, lowerLimit, NA)}
+
+  output_drc <- drc::drm(
+    formula = as.numeric(fc_ttm) ~ as.numeric(concentration),
     na.action = na.omit,
     data = inputData,
-    fct = drc::l3u(names = c("h","l_asymp", "half_max")),
-    upperl = c(NA, upperLimit, NA),
-    lowerl = c(NA, 1E-10, NA)),
-    silent = T)
+    upperl = upperLimit,
+    lowerl = lowerLimit,
+    fct = drc::L.4())
+
+
+  # output_drc <- try(drc::drm(
+  #   formula = fc_ttm ~ concentration,
+  #   na.action = na.omit,
+  #   data = inputData,
+  #   fct = drc::l3u(names = c("h","l_asymp", "half_max")),
+  #   upperl = c(NA, upperLimit, NA),
+  #   lowerl = c(NA, 1E-10, NA)),
+  #   silent = T)
 
     # output_lm <-  try(lm(
     #   formula = fc_ttm ~ offset(concentration),
@@ -159,7 +171,9 @@ tdsR_get_params <- function(inputData,
                             timeTreatment,
                             upperLimit,
                             upperLimitThreshold,
-                            orderConc){
+                            orderConc,...){
+
+  orderConc = orderConc
 
   max_k <- NA
 
@@ -171,11 +185,11 @@ tdsR_get_params <- function(inputData,
 
   time$min <- min(time$points)
 
-  params <- matrix(data = NA, ncol = 4, nrow = length(time$points))
+  params <- matrix(data = NA, ncol = 5, nrow = length(time$points))
 
   #params <- as.data.frame(params)
 
-  colnames(params) <- c("h", "l_asymp", "half_max", "p_val")
+  colnames(params) <- c("h", "l_asymp","u_assymp", "coef_e", "p_val")
 
   rownames(params) <- time$points
 
@@ -204,7 +218,7 @@ tdsR_get_params <- function(inputData,
 
   tmp.time$concentration <- conc
 
-  params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData =  tmp.time, upperLimit = upperLimitThreshold), silent = T)
+  params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData = tmp.time, upperLimit = upperLimitThreshold),silent = T)
 
 
   if(params[rownames(params) == time$max,2] >= upperLimitThreshold | is.na(params[rownames(params) == time$max,2]) |
@@ -229,9 +243,8 @@ tdsR_get_params <- function(inputData,
       inputData$concentration <- conc
 
 
-
       output <- try(tdsR_logistic_fit(inputData =  inputData,
-                                      upperLimit = upperLimit),
+                                      upperLimit = upperLimit,...),
                     silent = T)
 
     }) -> params
@@ -250,13 +263,13 @@ tdsR_get_params <- function(inputData,
 
   return.l_assymp <- max(as.numeric(return.l_assymp), na.rm = T)
 
-  return.na <- is.na(params[,2])
+  return.na <- is.na(as.numeric(params[,2]))
 
   return.na <- time$points[return.na]
 
   return.na <- max(as.numeric(return.na), na.rm = T)
 
-  return.sign <- c(0, diff(sign(params[,2])))
+  return.sign <- c(0, diff(sign(as.numeric(params[,2]))))
 
   return.sign <- which(return.sign > 0)
 
@@ -353,8 +366,7 @@ tdsR_smooth <- function(inputData, groupingVariables){
 }
 
 
-tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9, upperLimitThreshold = 0.8, smoothData = T,
-                     orderConc = T){
+tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9, upperLimitThreshold = 0.8, smoothData = T,orderConc = T,...){
 
   #FIXME option for user to calculate trapezoid estimates
 
@@ -399,7 +411,7 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
     #inputData <- subset_data
 
-    tmp <- tdsR_get_params(inputData =  subset_data, timeTreatment, upperLimit, upperLimitThreshold, orderConc)
+    tmp <- tdsR_get_params(inputData =subset_data, timeTreatment, upperLimit, upperLimitThreshold, orderConc=orderConc,...)
 
     tmp[[1]] <- cbind(key, tmp[[1]])
 
