@@ -112,13 +112,6 @@ tdsR_logistic_fit <- function(inputData, groupingVariables,
     lowerl = lowerLimit,
     fct = drc::L.4())
 
-  class(models[[1]])
-
-  class(models[[30]])
-
-
-
-
   # output_drc <- try(drc::drm(
   #   formula = fc_ttm ~ concentration,
   #   na.action = na.omit,
@@ -261,15 +254,24 @@ tdsR_get_params <- function(inputData,
 
     }) -> params
 
-    models <- lapply(params, "[[",1)
+    if(saveModel==T){
 
-    params <- lapply(params,function(x){
-      if(length(x)>1){
-        return(x[[2]])
-      }else{
-        return(NA)
+      lapply(params, function(x){
+        #x= params[5]
+        if(length(x)==2){
+          return(list(models <- x[[1]],params <- x[[2]]))
+        }else if(length(x)==1){
+          return(list(models <- NULL,params <- x[[1]]))
+        }
+
+      }) -> params
+
+      models <- lapply(params, "[[",1)
+      params <- lapply(params, "[[",2)
+
+    }else{
+      params <- params
       }
-    })
 
     params <- do.call(rbind, params)
 
