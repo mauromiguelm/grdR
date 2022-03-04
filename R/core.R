@@ -93,7 +93,9 @@ tdsR_convert = function(inputData, case, initial_count) {
 
 }
 
-tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLimit = 1E-10){
+tdsR_logistic_fit <- function(inputData, groupingVariables,
+                              upperLimit, lowerLimit = 1E-10,
+                              saveModel){
 
   #inputData <- tmp.time
 
@@ -109,6 +111,12 @@ tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLim
     upperl = upperLimit,
     lowerl = lowerLimit,
     fct = drc::L.4())
+
+  class(models[[1]])
+
+  class(models[[30]])
+
+
 
 
   # output_drc <- try(drc::drm(
@@ -160,10 +168,15 @@ tdsR_logistic_fit <- function(inputData, groupingVariables, upperLimit, lowerLim
 
     output_df <- NA
 
+     }
+
+  if(saveModel==T){
+    model = output_drc
+    return(list(model,output_df))
+
+  }else{
+    return(output_df)
   }
-
-  return(output_df)
-
 }
 
 
@@ -171,9 +184,8 @@ tdsR_get_params <- function(inputData,
                             timeTreatment,
                             upperLimit,
                             upperLimitThreshold,
-                            orderConc,...){
-
-  orderConc = orderConc
+                            orderConc,
+                            saveModel){
 
   max_k <- NA
 
@@ -218,8 +230,8 @@ tdsR_get_params <- function(inputData,
 
   tmp.time$concentration <- conc
 
-  params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData = tmp.time, upperLimit = upperLimitThreshold),silent = T)
-
+  params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData = tmp.time,
+                                                                  upperLimit = upperLimitThreshold, saveModel = F),silent = T)
 
   if(params[rownames(params) == time$max,2] >= upperLimitThreshold | is.na(params[rownames(params) == time$max,2]) |
      params[rownames(params) == time$max,2] >= upperLimit){
@@ -242,12 +254,22 @@ tdsR_get_params <- function(inputData,
 
       inputData$concentration <- conc
 
-
       output <- try(tdsR_logistic_fit(inputData =  inputData,
-                                      upperLimit = upperLimit,...),
+                                      upperLimit = upperLimit,
+                                      saveModel = saveModel),
                     silent = T)
 
     }) -> params
+
+    models <- lapply(params, "[[",1)
+
+    params <- lapply(params,function(x){
+      if(length(x)>1){
+        return(x[[2]])
+      }else{
+        return(NA)
+      }
+    })
 
     params <- do.call(rbind, params)
 
@@ -326,7 +348,7 @@ tdsR_get_params <- function(inputData,
     #
     # }
 
-  return(list(params, estimated_onset = time$return))
+  return(list(params, estimated_onset = time$return, models))
 
 
 }
@@ -366,7 +388,8 @@ tdsR_smooth <- function(inputData, groupingVariables){
 }
 
 
-tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9, upperLimitThreshold = 0.8, smoothData = T,orderConc = T,...){
+tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9,
+                     upperLimitThreshold = 0.8, smoothData = T,orderConc = T,saveModel = F){
 
   #FIXME option for user to calculate trapezoid estimates
 
@@ -403,15 +426,15 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
     print(key)
 
-    #key = keys[11]
-
-    #key = "EKVX Etomoxir"
+    #key = keys[1]
 
     subset_data <- subset(inputData, keys == key)
 
     #inputData <- subset_data
 
-    tmp <- tdsR_get_params(inputData =subset_data, timeTreatment, upperLimit, upperLimitThreshold, orderConc=orderConc,...)
+    tmp <- tdsR_get_params(inputData =subset_data, timeTreatment = timeTreatment,
+                           upperLimit=upperLimit, upperLimitThreshold=upperLimitThreshold,
+                           orderConc=orderConc,saveModel = saveModel)
 
     tmp[[1]] <- cbind(key, tmp[[1]])
 
@@ -429,7 +452,14 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
   names(estimated_onset) <- keys
 
-  return(list(params, estimated_onset))
+  if(saveModel==T){
+    models = lapply(output, "[[",3)
+    return(list(params, estimated_onset, models))
+  }else{
+    return(list(params, estimated_onset))
+  }
+
+
 
   #tmp <- lapply(output, "[[",1)
   #names(tmp) <- keys
