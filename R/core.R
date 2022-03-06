@@ -184,6 +184,8 @@ tdsR_get_params <- function(inputData,
 
   time <- list()
 
+  models = list()
+
   time$points <- as.numeric(as.character(unique(inputData$time)))
 
   time$max <- max(time$points)
@@ -248,7 +250,7 @@ tdsR_get_params <- function(inputData,
       inputData$concentration <- conc
 
       output <- try(tdsR_logistic_fit(inputData =  inputData,
-                                      upperLimit = upperLimit,
+                                      upperLimit = upperLimitThreshold,
                                       saveModel = saveModel),
                     silent = T)
 
@@ -281,7 +283,7 @@ tdsR_get_params <- function(inputData,
 
   ##### checking when model crashes ####
 
-  return.l_assymp <- params[,2] == upperLimit
+  return.l_assymp <- params[,2] > upperLimit
 
   return.l_assymp <- time$points[return.l_assymp]
 
@@ -350,8 +352,11 @@ tdsR_get_params <- function(inputData,
     #
     # }
 
-  return(list(params, estimated_onset = time$return, models))
-
+  if(saveModel==T){
+    return(list(params, estimated_onset = time$return, models))
+  }else{
+    return(list(params, estimated_onset = time$return))
+  }
 
 }
 
