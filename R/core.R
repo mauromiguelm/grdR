@@ -1,18 +1,3 @@
-# Hello, world!
-#
-# This is an example function named 'hello'
-# which prints 'Hello, world!'.
-#
-# You can learn more about package authoring with RStudio at:
-#
-#   http://r-pkgs.had.co.nz/
-#
-# Some useful keyboard shortcuts for package authoring:
-#
-#   Install Package:           'Ctrl + Shift + B'
-#   Check Package:             'Ctrl + Shift + E'
-#   Test Package:              'Ctrl + Shift + T'
-
 tdsR_trim_mean = function(x, percent) {
   x = x[!is.na(x)]
   n = length(x)
@@ -97,9 +82,6 @@ tdsR_logistic_fit <- function(inputData, groupingVariables,
                               upperLimit, lowerLimit = 1E-10,
                               saveModel){
 
-  #inputData <- tmp.time
-
-
   if(!is.null(upperLimit)){upperLimit <- c(NA,NA, upperLimit, NA)}
 
   if(!is.null(lowerLimit)){lowerLimit <- c(NA,NA, lowerLimit, NA)}
@@ -112,20 +94,6 @@ tdsR_logistic_fit <- function(inputData, groupingVariables,
     lowerl = lowerLimit,
     fct = drc::L.4())
 
-  # output_drc <- try(drc::drm(
-  #   formula = fc_ttm ~ concentration,
-  #   na.action = na.omit,
-  #   data = inputData,
-  #   fct = drc::l3u(names = c("h","l_asymp", "half_max")),
-  #   upperl = c(NA, upperLimit, NA),
-  #   lowerl = c(NA, 1E-10, NA)),
-  #   silent = T)
-
-    # output_lm <-  try(lm(
-    #   formula = fc_ttm ~ offset(concentration),
-    #   data = inputData
-    # ), silent = T)
-
   # test if logictic fit outperforms linear regression using ANOVA
 
   if(class(output_drc) == "drc" &&
@@ -133,26 +101,7 @@ tdsR_logistic_fit <- function(inputData, groupingVariables,
      !is.null(stats::residuals(output_drc))
   ) {
 
-    # RSS1 <-  sum((stats::resid(output_lm))**2)
-    #
-    # RSS2 <-  sum((stats::resid(output_drc))**2)
-    #
-    # nparam1 <- 2  #FIXME check if dfs and models are correct
-    #
-    # nparam2 <- 3
-    #
-    # RDF1 <- dim(output_drc$data)[1] - nparam1
-    #
-    # RDF2 <- dim(output_drc$data)[1] - nparam2
-    #
-    # f_value = (RSS1 - RSS2)/(RDF1-RDF2) / (RSS2)/(RDF2)
-    #
-    # f_pval <- stats::pf(f_value, RDF1, RDF2, lower.tail = F)
-    #
      output_df <- coef(output_drc)
-    #
-    #output_df["p_val"] <- f_pval
-
 
      output_df["p_val"] <- summary(output_drc)[3]$coefficients[1,4]
 
@@ -194,15 +143,13 @@ tdsR_get_params <- function(inputData,
 
   params <- matrix(data = NA, ncol = 5, nrow = length(time$points))
 
-  #params <- as.data.frame(params)
-
   colnames(params) <- c("h", "l_asymp","u_assymp", "coef_e", "p_val")
 
   rownames(params) <- time$points
 
   time$limits <- setNames(rep(0,
                               times = length(time$points)),
-                          time$points) # limit to search
+                          time$points)
 
   time$prior <-  rep(1,length(time$points)) / length(time$points)  #uniform prior
 
@@ -210,10 +157,7 @@ tdsR_get_params <- function(inputData,
 
   time$posterior <- setNames(rep(0,
                                  times = length(time$points)),
-                             time$points) # limit to search
-
-  # now call drc and fill parameters start timepoint and end time point,
-  #TODO params[rownames(params) == c(time$min, time$max),]
+                             time$points)
 
   tmp.time <- inputData[inputData$time == time$max,]
 
@@ -237,8 +181,6 @@ tdsR_get_params <- function(inputData,
 
     lapply(time$points, function(time_point){
 
-      #time_point <- time$max
-
       inputData =  inputData[inputData$time == time_point,]
 
       conc <- inputData$concentration
@@ -259,7 +201,6 @@ tdsR_get_params <- function(inputData,
     if(saveModel==T){
 
       lapply(params, function(x){
-        #x= params[5]
         if(length(x)==2){
           return(list(models <- x[[1]],params <- x[[2]]))
         }else if(length(x)==1){
@@ -281,7 +222,7 @@ tdsR_get_params <- function(inputData,
 
   }
 
-  ##### checking when model crashes ####
+  ##### checking when model is undefined ####
 
   return.l_assymp <- params[,2] > upperLimit
 
@@ -307,51 +248,6 @@ tdsR_get_params <- function(inputData,
 
   if(time$return < timeTreatment){time$return = timeTreatment}
 
-  #if(any(is.na(params[,"l_asymp:(Intercept)"]))){
-
-  #time$return <- apply(params, 1, function(i) all(is.na(i)))
-
-  # time$return <- time$return[time$return == T]
-  #
-  # time$return <- time$return[names(time$return) == max(as.numeric(names(time$return)))]
-  #
-  # time$return <- names(time$return)
-  #
-  # }else{
-  #
-  #   #diff(params[,"l_asymp:(Intercept)"])  #which(abs(params[,"l_asymp:(Intercept)"]-1)==min(abs(params[,"l_asymp:(Intercept)"]-1)))
-  #
-  #   time$return <- as.numeric(names(which(diff(params[,"l_asymp:(Intercept)"]) == min(diff(params[,"l_asymp:(Intercept)"])))))
-  #
-  # }
-
-
-
-    # if(all(time$posterior == 0)){  #posterior is empty, run from prior
-    #
-    #    time$sample <- as.numeric(names(sample(x = time$prior,
-    #                                size = 1,
-    #                                replace = T,
-    #                                prob = time$prior)))
-    #
-    #
-    #    tmp.time <- inputData[inputData$time == time$sample,]
-    #
-    #    params[rownames(params) == time$sample,] <-  tdsR_logistic_fit(tmp.time)
-    #
-    #    if(){ #if sampled within optimal window,
-    #
-    #    }else{ # if time if na, shorten the window fro
-    #
-    #
-    #    }
-    #
-    #
-    #
-    # }else{ #run and update posterior
-    #
-    # }
-
   if(saveModel==T){
     return(list(params, estimated_onset = time$return, models))
   }else{
@@ -369,10 +265,6 @@ tdsR_smooth <- function(inputData, groupingVariables){
   groups <- do.call(paste, inputData[,groupingVariables])
 
   lapply(split(inputData, groups), function(x){
-
-    #print(x$cell_line[1])
-    #print(x$agent[1])
-    #x = split(inputData, groups)[[1]]
 
     out <- x[!duplicated(x$time),]
 
@@ -411,7 +303,6 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
   }
 
-  # the idea is to fit, get k (slope) bsaed on random sampling, and limit the area of search based on that
 
   if(length(groupingVariables[!groupingVariables == "time"]) > 1){
 
@@ -429,11 +320,7 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
     print(key)
 
-    #key = keys[1]
-
     subset_data <- subset(inputData, keys == key)
-
-    #inputData <- subset_data
 
     tmp <- tdsR_get_params(inputData =subset_data, timeTreatment = timeTreatment,
                            upperLimit=upperLimit, upperLimitThreshold=upperLimitThreshold,
@@ -461,34 +348,12 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
   }else{
     return(list(params, estimated_onset))
   }
-
-
-
-  #tmp <- lapply(output, "[[",1)
-  #names(tmp) <- keys
-
-  #View(tmp[["HT29 Methotrexate"]])
-  # create a conditional if endpoint doesnt produce a fit, cell is resistant (t_), if startpoint
-
-  #then call drc again with a new time
-
-
-
-
-  # sample endpoints, if there's no fit, return maximun resistance
-
-
-  #FIXME how to correct for growth rate? cells that divide less tend to have later effects.
-  #FIXME maybe adjust t_onset by k, normalize by k
-
 }
 
 
 tdsR_getOutput <- function(inputData, metric){
 
   if(metric == "tdsR"){
-
-    #inputData = tmp
 
     out <- inputData[[2]]
 
