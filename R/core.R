@@ -398,10 +398,6 @@ tdsR_smooth <- function(inputData, groupingVariables){
 tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9,
                      upperLimitThreshold = 0.8, smoothData = T,orderConc = T,saveModel = F){
 
-  #FIXME option for user to calculate trapezoid estimates
-
-  #FIXME option for user to use growth rates (trapezoid) instead of growth curves
-
   if(smoothData == T){inputData = tdsR_smooth(inputData, groupingVariables)}
 
   inputData <- tdsR_convert(inputData = inputData, case = "C", initial_count = T)
