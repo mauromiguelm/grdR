@@ -1,80 +1,59 @@
-tdsR_trim_mean = function(x, percent) {
-  x = x[!is.na(x)]
-  n = length(x)
-  k = n*(percent/100)/2
-  # round down if k is half an integer
-  if(round(k) != k & round(k*2) == k*2) {
-    lo = floor(k) + 1
-    hi = n - lo + 1
-  } else {
-    lo = round(k) + 1
-    hi = n - lo + 1
-  }
-  x = sort(x)[lo:hi]
-  return(mean(x))
+tdsR_average = function(data, type) {
+  aggregate(cell_count~.,data=data, get(type), na.rm = T)
 }
 
-tdsR_convert = function(inputData, case, initial_count) {
-  #FIXME this function was taken from GRmetrics package, give credits or change
+tdsR_tidy = function(inputData, type){
 
-  if(case == "A") {
-    return(inputData)
-  } else if(case == "C") {
-    delete_cols = which(colnames(inputData) %in% c('concentration',
-                                                   'cell_count'))
-    keys = colnames(inputData)[-delete_cols]
-    time0 = inputData[inputData$time == 0, c(keys, 'cell_count')]
-    ctrl = inputData[inputData$concentration == 0 & inputData$time > 0,
-                     c(keys, 'cell_count')]
-    data = inputData[inputData$concentration != 0 & inputData$time > 0, ]
-    time0_keys = NULL   #TODO CONTINUE HERE
-    ctrl_keys = NULL
-    for(i in 1:length(keys)) {
-      #i = 1
-      time0_keys[i] = length(intersect(time0[[ keys[i] ]],
-                                       data[[ keys[i] ]])) > 0
-      ctrl_keys[i] = length(intersect(ctrl[[ keys[i] ]],
-                                      data[[ keys[i] ]])) > 0
-    }
-    ctrl_keys = keys[ctrl_keys]
+  expected_cols <- c('concentration','time','cell_count')
 
-    time0_keys = keys[time0_keys]
-
-    temp = ctrl[, ctrl_keys]
-    ctrl$key = apply(temp, 1, function(x) paste(x, collapse = ' '))
-
-    temp = time0[, time0_keys]
-    time0$key = apply(temp, 1, function(x) paste(x, collapse = ' '))
-
-    temp = data[, ctrl_keys]
-    data$key_ctrl = apply(temp, 1, function(x) paste(x, collapse = ' '))
-
-    temp = data[, time0_keys]
-    data$key_time0 = apply(temp, 1, function(x) paste(x, collapse = ' '))
-
-    data$cell_count__ctrl = NA
-    data$cell_count__time0 = NA
-    for(key in unique(ctrl$key)) {
-
-      #key = unique(ctrl$key)[1]
-      trimmed_mean = tdsR_trim_mean(ctrl[ctrl$key == key,]$cell_count, 50)
-      data[data$key_ctrl == key, 'cell_count__ctrl'] = trimmed_mean
+  if(!all(expected_cols %in%colnames(inputData))){
+    #check if all necessary columns are present in the data
+    missing_cols <- which(!expected_cols%in%colnames(inputData))
+    stop(paste("Input data is incomplete, missing:", expected_cols[missing_cols]))
     }
 
-    for(key in unique(time0$key)) {
-      trimmed_mean = tdsR_trim_mean(time0[time0$key == key,]$cell_count, 50)
-      data[data$key_time0 == key, 'cell_count__time0'] = trimmed_mean
-    }
+  grouping_cols <- which(!colnames(inputData) %in% expected_cols)
+  grouping_cols <- colnames(inputData)[grouping_cols]
 
-    delete_cols = which(colnames(data) %in% c('key_ctrl', 'key_time0'))
-    data = data[, -delete_cols]
+  inputData_ttm <- inputData[inputData$time>0 & inputData$concentration!=0,]
+  inputData_ttm$grouping_cols <- apply(inputData_ttm[,grouping_cols],1, paste, collapse = "_")
+  inputData_ctrl <- inputData[inputData$concentration==0,]
+  inputData_ctrl$grouping_cols <- apply(inputData_ctrl[,grouping_cols],1, paste, collapse = "_")
 
-    if(!initial_count) { data$cell_count__time0 = NULL }
-    data = as.data.frame(data)
-    row.names(data) = 1:dim(data)[1]
-    inputData = data
-    return(inputData)
-  }
+  lapply(unique(inputData_ttm$grouping_cols), function(group){
+
+    #group = unique(inputData_ttm$grouping_cols)[1]
+
+    data_ttm <- inputData_ttm[inputData_ttm$grouping_cols==group,]
+
+    data_ttm <- tdsR_average(data = data_ttm,type = "median")
+
+    data_ctrl <- inputData_ctrl[inputData_ctrl$grouping_cols==group,]
+
+    data_ctrl <- tdsR_average(data = data_ctrl,type = "median")
+
+    data_ctrl_t0 <- data_ctrl[data_ctrl$time==0,]
+    data_ctrl_t0$concentration <- NULL
+    data_ctrl_t0$time <- NULL
+    data_ctrl$concentration <- NULL
+    data_ctrl <- data_ctrl[data_ctrl$time>0,]
+    colnames(data_ctrl_t0)[which(colnames(data_ctrl_t0)=="cell_count")] <- 'cell_count_t0'
+    colnames(data_ctrl)[which(colnames(data_ctrl)=="cell_count")] <- 'cell_count_ctrl'
+
+    #merge cells at time zero to treatment groups
+    data_ttm <- merge(data_ttm, data_ctrl_t0)
+
+    #merge match time control for each treatment group
+    data_ttm <- merge(data_ttm, data_ctrl)
+
+    data_ttm$grouping_cols <- NULL
+
+    return(data_ttm)
+
+  })-> output_data
+
+  output_data <- do.call(rbind, output_data)
+ return(output_data)
 
 }
 
@@ -292,17 +271,10 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
   if(smoothData == T){inputData = tdsR_smooth(inputData, groupingVariables)}
 
-  inputData <- tdsR_convert(inputData = inputData, case = "C", initial_count = T)
+  inputData <- tdsR_tidy(inputData = inputData,type = 'median')
 
-  inputData$fc_ttm = with(inputData, cell_count/cell_count__ctrl)
-  inputData$fc_ctr = with(inputData, cell_count__ctrl/cell_count__time0)
-
-  if("cell_line" %in% colnames(inputData)){
-
-    inputData$cell_line <- as.character(inputData$cell_line)
-
-  }
-
+  inputData$fc_ttm = inputData$cell_count/inputData$cell_count_ctrl
+  inputData$fc_ctr = inputData$cell_count_ctrl/inputData$cell_count_t0
 
   if(length(groupingVariables[!groupingVariables == "time"]) > 1){
 
