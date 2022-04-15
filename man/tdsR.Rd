@@ -1,12 +1,10 @@
-\name{hello}
-\alias{hello}
-\title{Hello, World!}
+\name{tdsR}
+\alias{}
+\title{Temporal Drug Sensitivity (tds)}
 \usage{
-hello()
 }
 \description{
-Prints 'Hello, world!'.
+Temporal Drug Sensitivity (tds).
 }
 \examples{
-hello()
 }
