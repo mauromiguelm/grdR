@@ -2,9 +2,9 @@
 
 ## Introduction
 
-tdsR is package that contains a method to estimate and study the drug onset time in cancer cell lines.
+grdR is package that contains a method to estimate and study the drug onset time in cancer cell lines.
 The package includes a model to (A) create synthetic data and (B) to estimate the
-temporal drug sensitivity (tds) effect of a drug.
+growth response delay (GRD) effect of a drug.
 
 
 <p align="center">
@@ -12,7 +12,7 @@ temporal drug sensitivity (tds) effect of a drug.
  </p align="center">
 
 <div align="center">
-  Figure 1. Introduction to temporal drug sensitivity (tds) and its estimation with simulated data.
+  Figure 1. Introduction to growth response delay (GRD) and its estimation with simulated data.
 </div>
 
 
