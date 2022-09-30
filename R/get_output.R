@@ -11,7 +11,7 @@ get_output <- function(outputData, metric){
 
   if(metric == "grdR"){
 
-    out <- inputData[[2]]
+    out <- outputData[[2]]
 
     groups <- names(out)
 
@@ -19,7 +19,7 @@ get_output <- function(outputData, metric){
 
   }else if(metric == "parameters"){
 
-    out <- inputData[[1]]
+    out <- outputData[[1]]
 
     out <- do.call(rbind, out)
 
