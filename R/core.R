@@ -1,8 +1,8 @@
-tdsR_average = function(data, type) {
+get_average = function(data, type) {
   aggregate(cell_count~.,data=data, get(type), na.rm = T)
 }
 
-tdsR_tidy = function(inputData, type){
+make_tidy = function(inputData, type){
 
   expected_cols <- c('concentration','time','cell_count')
 
@@ -26,11 +26,11 @@ tdsR_tidy = function(inputData, type){
 
     data_ttm <- inputData_ttm[inputData_ttm$grouping_cols==group,]
 
-    data_ttm <- tdsR_average(data = data_ttm,type = "median")
+    data_ttm <- get_average(data = data_ttm,type = "median")
 
     data_ctrl <- inputData_ctrl[inputData_ctrl$grouping_cols==group,]
 
-    data_ctrl <- tdsR_average(data = data_ctrl,type = "median")
+    data_ctrl <- get_average(data = data_ctrl,type = "median")
 
     data_ctrl_t0 <- data_ctrl[data_ctrl$time==0,]
     data_ctrl_t0$concentration <- NULL
@@ -57,7 +57,7 @@ tdsR_tidy = function(inputData, type){
 
 }
 
-tdsR_logistic_fit <- function(inputData, groupingVariables,
+get_logistic_fit <- function(inputData, groupingVariables,
                               upperLimit, lowerLimit = 1E-10,
                               saveModel){
 
@@ -101,12 +101,12 @@ tdsR_logistic_fit <- function(inputData, groupingVariables,
 }
 
 
-tdsR_get_params <- function(inputData,
-                            timeTreatment,
-                            upperLimit,
-                            upperLimitThreshold,
-                            orderConc,
-                            saveModel){
+get_params <- function(inputData,
+                       timeTreatment,
+                       upperLimit,
+                       upperLimitThreshold,
+                       orderConc,
+                       saveModel){
 
   max_k <- NA
 
@@ -148,8 +148,8 @@ tdsR_get_params <- function(inputData,
 
   tmp.time$concentration <- conc
 
-  params[rownames(params) == time$max,] <-  try(tdsR_logistic_fit(inputData = tmp.time,
-                                                                  upperLimit = upperLimitThreshold, saveModel = F),silent = T)
+  params[rownames(params) == time$max,] <-  try(get_logistic_fit(inputData = tmp.time,
+                                                                 upperLimit = upperLimitThreshold, saveModel = F),silent = T)
 
   if(params[rownames(params) == time$max,2] >= upperLimitThreshold | is.na(params[rownames(params) == time$max,2]) |
      params[rownames(params) == time$max,2] >= upperLimit){
@@ -170,7 +170,7 @@ tdsR_get_params <- function(inputData,
 
       inputData$concentration <- conc
 
-      output <- try(tdsR_logistic_fit(inputData =  inputData,
+      output <- try(get_logistic_fit(inputData =  inputData,
                                       upperLimit = upperLimitThreshold,
                                       saveModel = saveModel),
                     silent = T)
@@ -236,7 +236,7 @@ tdsR_get_params <- function(inputData,
 }
 
 
-tdsR_smooth <- function(inputData, groupingVariables){
+make_smooth <- function(inputData, groupingVariables){
 
 
   groupingVariables <- append(groupingVariables, "concentration")
@@ -266,12 +266,12 @@ tdsR_smooth <- function(inputData, groupingVariables){
 }
 
 
-tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9,
+get_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9,
                      upperLimitThreshold = 0.8, smoothData = T,orderConc = T,saveModel = F){
 
-  if(smoothData == T){inputData = tdsR_smooth(inputData, groupingVariables)}
+  if(smoothData == T){inputData = make_smooth(inputData, groupingVariables)}
 
-  inputData <- tdsR_tidy(inputData = inputData,type = 'median')
+  inputData <- make_tidy(inputData = inputData,type = 'median')
 
   inputData$fc_ttm = inputData$cell_count/inputData$cell_count_ctrl
   inputData$fc_ctr = inputData$cell_count_ctrl/inputData$cell_count_t0
@@ -294,9 +294,9 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 
     subset_data <- subset(inputData, keys == key)
 
-    tmp <- tdsR_get_params(inputData =subset_data, timeTreatment = timeTreatment,
-                           upperLimit=upperLimit, upperLimitThreshold=upperLimitThreshold,
-                           orderConc=orderConc,saveModel = saveModel)
+    tmp <- get_params(inputData =subset_data, timeTreatment = timeTreatment,
+                      upperLimit=upperLimit, upperLimitThreshold=upperLimitThreshold,
+                      orderConc=orderConc,saveModel = saveModel)
 
     tmp[[1]] <- cbind(key, tmp[[1]])
 
@@ -323,15 +323,15 @@ tdsR_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit
 }
 
 
-tdsR_getOutput <- function(inputData, metric){
+get_output <- function(inputData, metric){
 
-  if(metric == "tdsR"){
+  if(metric == "grdR"){
 
     out <- inputData[[2]]
 
     groups <- names(out)
 
-    out <- data.frame(groups = names(out), tds = out)
+    out <- data.frame(groups = names(out), grd = out)
 
   }else if(metric == "parameters"){
 

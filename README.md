@@ -8,7 +8,7 @@ growth response delay (GRD) effect of a drug.
 
 
 <p align="center">
-<img src="https://github.com/mauromiguelm/tdsR/blob/master/img/figure1_intro_examples.png" width="600">
+<img src="https://github.com/mauromiguelm/grdR/blob/master/img/figure1_intro_examples.png" width="600">
  </p align="center">
 
 <div align="center">
