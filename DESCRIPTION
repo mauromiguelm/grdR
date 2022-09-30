@@ -1,11 +1,11 @@
 Package: grdR
-Title:  Growth Response Dela (GRD) of cancer cell lines exposed to drugs.
+Title: Growth Response Dela (GRD) of cancer cell lines exposed to drugs.
 Version: 1.0
 Authors@R: 
     person("Mauro M.", "Masiero", , "mauromiguelm@hotmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-9632-8144"))
 Description: Growth Response Delay (GRD) of cancer cell lines exposed to drugs.
-License:  use_gpl3_license()
+License: use_gpl3_license()
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
@@ -15,3 +15,4 @@ Imports:
     drc,
     stats,
     mgcv
+LazyData: true
