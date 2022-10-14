@@ -17,9 +17,11 @@ growth response delay (GRD) effect of a drug.
 
 ## Installation
 
+```R
 if(!require(grdR)) {
  devtools::install_github("mauromiguelm/grdR")
 }
+```
 
 ## About
 The package has been extensively tested and I am currently working towards documenting and publishing.
