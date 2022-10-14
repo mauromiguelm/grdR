@@ -15,6 +15,11 @@ growth response delay (GRD) effect of a drug.
   Figure 1. Introduction to growth response delay (GRD) and its estimation with simulated data.
 </div>
 
+## Installation
+
+if(!require(grdR)) {
+ devtools::install_github("mauromiguelm/grdR")
+}
 
 ## About
-The package has been extensively tested and I am currently working towards documenting and publishing. 
+The package has been extensively tested and I am currently working towards documenting and publishing.
