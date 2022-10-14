@@ -35,3 +35,8 @@ get_fit(
 \description{
 Fit grdR on growth curves
 }
+\examples{
+get_fit(sample_data, groupingVariables = "agent",
+ smoothData = F, upperLimitThreshold = 1,
+ timeTreatment = 1,upperLimit = 1,orderConc = T,saveModel = F)
+}
