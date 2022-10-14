@@ -10,9 +10,9 @@ get_fit(
   timeTreatment = 0,
   upperLimit = 0.9,
   upperLimitThreshold = 0.8,
-  smoothData = T,
-  orderConc = T,
-  saveModel = F
+  smoothData = TRUE,
+  orderConc = TRUE,
+  saveModel = FALSE
 )
 }
 \arguments{
@@ -32,11 +32,14 @@ get_fit(
 
 \item{saveModel}{should model parameters be returned?}
 }
+\value{
+grdR fitted growth curves
+}
 \description{
 Fit grdR on growth curves
 }
 \examples{
 get_fit(sample_data, groupingVariables = "agent",
- smoothData = F, upperLimitThreshold = 1,
- timeTreatment = 1,upperLimit = 1,orderConc = T,saveModel = F)
+ smoothData = FALSE, upperLimitThreshold = 1,
+ timeTreatment = 1,upperLimit = 1,orderConc = TRUE,saveModel = FALSE)
 }

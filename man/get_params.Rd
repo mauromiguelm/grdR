@@ -14,7 +14,20 @@ get_params(
 )
 }
 \arguments{
-\item{saveModel}{}
+\item{inputData}{input data in grdR format}
+
+\item{timeTreatment}{time of drug treatment}
+
+\item{upperLimit}{upper limit fitting function threshold}
+
+\item{upperLimitThreshold}{upper limit fitting function threshold}
+
+\item{orderConc}{order effect by concentrations}
+
+\item{saveModel}{should model be saved}
+}
+\value{
+fitted params and optionaly model
 }
 \description{
 Get parameters from model

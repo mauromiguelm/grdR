@@ -1,15 +1,14 @@
 #' Get parameters from model
 #'
-#' @param inputData
-#' @param timeTreatment
-#' @param upperLimit
-#' @param upperLimitThreshold
-#' @param orderConc
-#' @param saveModel
+#' @param inputData input data in grdR format
+#' @param timeTreatment time of drug treatment
+#' @param upperLimit upper limit fitting function threshold
+#' @param upperLimitThreshold upper limit fitting function threshold
+#' @param orderConc order effect by concentrations
+#' @param saveModel should model be saved
 #'
-#' @return
+#' @return fitted params and optionaly model
 #'
-#' @examples
 get_params <- function(inputData,
                        timeTreatment,
                        upperLimit,
@@ -53,12 +52,12 @@ get_params <- function(inputData,
 
   fc_ttm <- tmp.time$fc_ttm
 
-  if(orderConc == T){conc = conc[order(fc_ttm, decreasing = T)]}
+  if(orderConc == TRUE){conc = conc[order(fc_ttm, decreasing = TRUE)]}
 
   tmp.time$concentration <- conc
 
   params[rownames(params) == time$max,] <-  try(get_logistic_fit(inputData = tmp.time,
-                                                                 upperLimit = upperLimitThreshold, saveModel = F),silent = T)
+                                                                 upperLimit = upperLimitThreshold, saveModel = FALSE),silent = T)
 
   if(params[rownames(params) == time$max,2] >= upperLimitThreshold | is.na(params[rownames(params) == time$max,2]) |
      params[rownames(params) == time$max,2] >= upperLimit){
@@ -75,14 +74,14 @@ get_params <- function(inputData,
 
       fc_ttm <- inputData$fc_ttm
 
-      if(orderConc == T){conc = conc[order(fc_ttm, decreasing = T)]}
+      if(orderConc == TRUE){conc = conc[order(fc_ttm, decreasing = T)]}
 
       inputData$concentration <- conc
 
       output <- try(get_logistic_fit(inputData =  inputData,
                                       upperLimit = upperLimitThreshold,
                                       saveModel = saveModel),
-                    silent = T)
+                    silent = TRUE)
 
     }) -> params
 

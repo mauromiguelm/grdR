@@ -11,13 +11,16 @@ get_output(outputData, metric)
 
 \item{metric}{return grdR or parameters}
 }
+\value{
+output type from grd model
+}
 \description{
 Get grdR output
 }
 \examples{
 grd_output <- get_fit(sample_data, groupingVariables = "agent",
- smoothData = F, upperLimitThreshold = 1,
- timeTreatment = 1,upperLimit = 1,orderConc = T,saveModel = F)
+ smoothData = FALSE, upperLimitThreshold = 1,
+ timeTreatment = 1,upperLimit = 1,orderConc = TRUE,saveModel = FALSE)
 
 get_output(outputData = grd_output, metric = "grdR")
 

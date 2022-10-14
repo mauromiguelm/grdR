@@ -11,6 +11,9 @@ make_smooth(inputData, groupingVariables)
 
 \item{groupingVariables}{variable to group (eg. controls, drugs, cells, etc..)}
 }
+\value{
+denoised data
+}
 \description{
 Denoise data with smoothing function from mgcv::gam
 }

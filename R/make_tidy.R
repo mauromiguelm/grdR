@@ -5,9 +5,8 @@
 #' @param inputData input data.frame in standard format
 #' @param type type of function to average data, eg. median, mean...
 #'
-#' @return
+#' @return a data frame with matching drugs and controls for each treatment group
 #'
-#' @examples
 make_tidy = function(inputData, type){
 
   expected_cols <- c('concentration','time','cell_count')

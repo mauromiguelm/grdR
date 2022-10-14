@@ -9,18 +9,18 @@
 #' @param orderConc should concentration be ordered based on effect?
 #' @param saveModel should model parameters be returned?
 #'
-#' @return
+#' @return grdR fitted growth curves
 #' @export
 #'
 #' @examples
 #' get_fit(sample_data, groupingVariables = "agent",
-#'  smoothData = F, upperLimitThreshold = 1,
-#'  timeTreatment = 1,upperLimit = 1,orderConc = T,saveModel = F)
+#'  smoothData = FALSE, upperLimitThreshold = 1,
+#'  timeTreatment = 1,upperLimit = 1,orderConc = TRUE,saveModel = FALSE)
 
 get_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9,
-                     upperLimitThreshold = 0.8, smoothData = T,orderConc = T,saveModel = F){
+                     upperLimitThreshold = 0.8, smoothData = TRUE,orderConc = TRUE,saveModel = FALSE){
 
-  if(smoothData == T){inputData = make_smooth(inputData, groupingVariables)}
+  if(smoothData == TRUE){inputData = make_smooth(inputData, groupingVariables)}
 
   inputData <- make_tidy(inputData = inputData,type = 'median')
 
@@ -63,7 +63,7 @@ get_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit 
 
   names(estimated_onset) <- keys
 
-  if(saveModel==T){
+  if(saveModel==TRUE){
     models = lapply(output, "[[",3)
     return(list(params, estimated_onset, models))
   }else{

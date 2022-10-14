@@ -13,7 +13,18 @@ get_logistic_fit(
 )
 }
 \arguments{
-\item{saveModel}{}
+\item{inputData}{input data}
+
+\item{groupingVariables}{variables to group}
+
+\item{upperLimit}{up boundary for fitting function}
+
+\item{lowerLimit}{lower boundary for fitting function}
+
+\item{saveModel}{should model be saved}
+}
+\value{
+fitted logistic params/model
 }
 \description{
 Fit model on data

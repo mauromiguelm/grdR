@@ -11,6 +11,9 @@ make_tidy(inputData, type)
 
 \item{type}{type of function to average data, eg. median, mean...}
 }
+\value{
+a data frame with matching drugs and controls for each treatment group
+}
 \description{
 @description  Make standard input data into tidy format/long format
 }

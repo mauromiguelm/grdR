@@ -11,6 +11,9 @@ get_average(data, type)
 
 \item{type}{type of function to average data, eg. median, mean...}
 }
+\value{
+averaged groups
+}
 \description{
 Average the data based on groups provided within data.frame
 }

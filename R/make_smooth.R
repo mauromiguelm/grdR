@@ -4,9 +4,8 @@
 #' @param inputData input data.frame in standard format
 #' @param groupingVariables variable to group (eg. controls, drugs, cells, etc..)
 #'
-#' @return
+#' @return denoised data
 #'
-#' @examples
 make_smooth <- function(inputData, groupingVariables){
 
   groupingVariables <- append(groupingVariables, "concentration")

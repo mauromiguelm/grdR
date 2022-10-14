@@ -1,14 +1,13 @@
 #' Fit model on data
 #'
-#' @param inputData
-#' @param groupingVariables
-#' @param upperLimit
-#' @param lowerLimit
-#' @param saveModel
+#' @param inputData input data
+#' @param groupingVariables variables to group
+#' @param upperLimit up boundary for fitting function
+#' @param lowerLimit lower boundary for fitting function
+#' @param saveModel should model be saved
 #'
-#' @return
+#' @return fitted logistic params/model
 #'
-#' @examples
 get_logistic_fit <- function(inputData, groupingVariables,
                               upperLimit, lowerLimit = 1E-10,
                               saveModel){
@@ -19,7 +18,7 @@ get_logistic_fit <- function(inputData, groupingVariables,
 
   output_drc <- drc::drm(
     formula = as.numeric(fc_ttm) ~ as.numeric(concentration),
-    na.action = na.omit,
+    na.action = stats::na.omit,
     data = inputData,
     upperl = upperLimit,
     lowerl = lowerLimit,
@@ -43,7 +42,7 @@ get_logistic_fit <- function(inputData, groupingVariables,
 
      }
 
-  if(saveModel==T){
+  if(saveModel==TRUE){
     model = output_drc
     return(list(model,output_df))
 

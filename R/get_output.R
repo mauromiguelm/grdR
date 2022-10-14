@@ -3,13 +3,13 @@
 #' @param outputData output data from get_fit
 #' @param metric return grdR or parameters
 #'
-#' @return
+#' @return output type from grd model
 #' @export
 #'
 #' @examples
 #' grd_output <- get_fit(sample_data, groupingVariables = "agent",
-#'  smoothData = F, upperLimitThreshold = 1,
-#'  timeTreatment = 1,upperLimit = 1,orderConc = T,saveModel = F)
+#'  smoothData = FALSE, upperLimitThreshold = 1,
+#'  timeTreatment = 1,upperLimit = 1,orderConc = TRUE,saveModel = FALSE)
 #'
 #' get_output(outputData = grd_output, metric = "grdR")
 #'
