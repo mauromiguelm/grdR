@@ -20,9 +20,14 @@
 get_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit = 0.9,
                      upperLimitThreshold = 0.8, smoothData = TRUE,orderConc = TRUE,saveModel = FALSE){
 
+
   if(smoothData == TRUE){inputData = make_smooth(inputData, groupingVariables)}
 
-  inputData <- make_tidy(inputData = inputData,type = 'median')
+  tidyOutput <- make_tidy(inputData = inputData,type = 'median')
+
+  inputData <- tidyOutput[[1]]
+
+  metaVariables <- tidyOutput[[2]]
 
   inputData$fc_ttm = inputData$cell_count/inputData$cell_count_ctrl
   inputData$fc_ctr = inputData$cell_count_ctrl/inputData$cell_count_t0
@@ -49,7 +54,9 @@ get_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit 
 
     tmp[[1]] <- cbind(key, tmp[[1]])
 
-    names(tmp[[2]]) <- key
+    # combine metadata with grR output
+
+    tmp[[2]] <- cbind(subset_data[1,metaVariables], data.frame(GRD = tmp[[2]]))
 
     return(tmp)
 
@@ -59,16 +66,12 @@ get_fit <- function(inputData, groupingVariables, timeTreatment = 0, upperLimit 
 
   names(params) <- keys
 
-  estimated_onset <- unlist(lapply(output, "[[",2))
-
-  names(estimated_onset) <- keys
+  estimated_onset <- do.call(rbind,lapply(output,`[[`,2))
 
   if(saveModel==TRUE){
     models = lapply(output, "[[",3)
     return(list(params, estimated_onset, models))
   }else{
-    return(list(params, estimated_onset))
+    return(estimated_onset)
   }
 }
-
-

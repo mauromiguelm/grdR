@@ -15,7 +15,7 @@ make_tidy = function(inputData, type){
     #check if all necessary columns are present in the data
     missing_cols <- which(!expected_cols%in%colnames(inputData))
     stop(paste("Input data is incomplete, missing:", expected_cols[missing_cols]))
-    }
+  }
 
   grouping_cols <- which(!colnames(inputData) %in% expected_cols)
   grouping_cols <- colnames(inputData)[grouping_cols]
@@ -58,7 +58,7 @@ make_tidy = function(inputData, type){
   })-> output_data
 
   output_data <- do.call(rbind, output_data)
- return(output_data)
+ return(list(output_data, grouping_cols))
 
 }
 
