@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-#' get_fit(sample_data, groupingVariables = "agent",
+#' get_fit(sample_data, groupingVariables = "perturbation",
 #'  smoothData = FALSE, upperLimitThreshold = 1,
 #'  timeTreatment = 1,upperLimit = 1,orderConc = TRUE,saveModel = FALSE)
 

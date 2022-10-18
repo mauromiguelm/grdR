@@ -34,4 +34,6 @@ sample_data <- cbind(data.frame(perturbation = paste(sample_data$halfeff,sample_
 
 sample_data$perturbation <- factor(sample_data$perturbation,labels = LETTERS[1:length(unique(sample_data$perturbation))])
 
+sample_data$time <- as.numeric(sample_data$time)
+
 usethis::use_data(sample_data, overwrite = TRUE)

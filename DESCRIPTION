@@ -16,6 +16,7 @@ Imports:
     stats,
     mgcv
 Suggests:
+    grDevices,
     testthat (>= 3.0.0),
     unittest
 LazyData: true

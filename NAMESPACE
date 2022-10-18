@@ -2,4 +2,5 @@
 
 export(get_fit)
 export(model_growth)
-export(plotGRD)
+export(plot_GRD)
+export(plot_growth)

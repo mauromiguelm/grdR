@@ -3,7 +3,7 @@ library(unittest, quietly = TRUE)
 
 if (!interactive()) options(warn=2, error = function() { sink(stderr()) ; traceback(3) ; q(status = 1) })
 
-grd_output <- grdR::get_fit(sample_data, groupingVariables = "agent",
+grd_output <- grdR::get_fit(sample_data, groupingVariables = "perturbation",
                             smoothData = FALSE, upperLimitThreshold = 1,
                             timeTreatment = 1,upperLimit = 1,orderConc = TRUE,saveModel = F)
 
