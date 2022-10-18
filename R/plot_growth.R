@@ -17,7 +17,7 @@
 #'
 #' plot_growth(inputData = inputData,groupingVariables = "perturbation", GRD = outputGRD$GRD)
 
-plot_growth <- function(inputData,groupingVariables, GRD, addLegend = FALSE){
+plot_growth <- function(inputData,groupingVariables, GRD = NULL, addLegend = FALSE){
 
   requireNamespace("grDevices", quietly = TRUE)
 
